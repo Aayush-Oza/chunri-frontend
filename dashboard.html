@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Admin Dashboard</title>
+
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="container header-inner">
+        <div class="brand">Admin<span style="color:var(--orange)">Panel</span></div>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                <li><a href="dashboard.html" style="color:var(--red);font-weight:700;">Dashboard</a></li>
+                <li><a href="add-product.html">Add Product</a></li>
+                <li><a href="../products.html">View Store</a></li>
+                <li><a href="#" onclick="logoutAdmin()">Logout</a></li>
+                <script>
+function logoutAdmin() {
+    localStorage.removeItem("is_admin");
+    localStorage.removeItem("admin_id");
+    window.location.href = "admin-login.html";
+}
+</script>
+
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- DASHBOARD -->
+<div class="container" style="padding:40px 0;">
+
+    <h2 style="color:var(--red);">Admin Dashboard</h2>
+
+    <!-- TOP CARDS -->
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:18px;
+        margin-top:25px;">
+        
+        <div class="card admin-card" id="usersCard"></div>
+        <div class="card admin-card" id="productsCard"></div>
+        <div class="card admin-card" id="ordersCard"></div>
+
+    </div>
+    <script>
+if (localStorage.getItem("is_admin") !== "true") {
+    alert("Access restricted to admin only!");
+    window.location.href = "admin-login.html";
+}
+</script>
+
+    <!-- CHARTS -->
+    <h3 style="margin-top:40px;color:var(--orange);">Sales Analytics</h3>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+        <canvas id="colorChart"></canvas>
+        <canvas id="designChart"></canvas>
+    </div>
+
+    <div style="margin-top:25px;">
+        <canvas id="clothChart"></canvas>
+    </div>
+
+</div>
+
+<script>
+const BASE_URL = "http://localhost:5000";
+
+// ================================
+// 1. LOAD BASIC STATS
+// ================================
+async function loadStats() {
+    const res = await fetch(`${BASE_URL}/admin/stats`);
+    const data = await res.json();
+
+    document.getElementById("usersCard").innerHTML =
+        card("Total Users", data.users, "var(--red)");
+
+    document.getElementById("productsCard").innerHTML =
+        card("Total Products", data.products, "var(--orange)");
+
+    document.getElementById("ordersCard").innerHTML =
+        card("Total Orders", data.orders, "var(--yellow)");
+}
+
+function card(title, value, color) {
+    return `
+        <div style="
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 4px 14px rgba(0,0,0,0.1);
+        ">
+            <h3 style="color:${color};font-size:20px;">${title}</h3>
+            <p style="font-size:32px;font-weight:800;margin-top:10px;">${value}</p>
+        </div>
+    `;
+}
+
+// ================================
+// 2. LOAD SALES BY COLOR
+// ================================
+async function loadColorChart() {
+    const res = await fetch(`${BASE_URL}/admin/sales-by-color`);
+    const data = await res.json();
+
+    new Chart(document.getElementById("colorChart"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                data: Object.values(data),
+                backgroundColor: ["red","orange","yellow","pink","green"]
+            }]
+        }
+    });
+}
+
+// ================================
+// 3. LOAD SALES BY DESIGN
+// ================================
+async function loadDesignChart() {
+    const res = await fetch(`${BASE_URL}/admin/sales-by-design`);
+    const data = await res.json();
+
+    new Chart(document.getElementById("designChart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: "Design Sales",
+                data: Object.values(data),
+                backgroundColor: "orange"
+            }]
+        }
+    });
+}
+
+// ================================
+// 4. LOAD SALES BY CLOTH
+// ================================
+async function loadClothChart() {
+    const res = await fetch(`${BASE_URL}/admin/sales-by-cloth`);
+    const data = await res.json();
+
+    new Chart(document.getElementById("clothChart"), {
+        type: "line",
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: "Cloth Sales",
+                data: Object.values(data),
+                borderColor: "red",
+                backgroundColor: "rgba(255,0,0,0.2)"
+            }]
+        }
+    });
+}
+
+// INIT
+loadStats();
+loadColorChart();
+loadDesignChart();
+loadClothChart();
+
+</script>
+
+</body>
+</html>

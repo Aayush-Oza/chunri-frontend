@@ -3,149 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chunri Store - Products</title>
+    <title>Admin Product Manager</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/products.css">
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/products.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .product-card {
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 16px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .product-card img {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .product-actions button {
+            margin-right: 8px;
+        }
+        .edit-box input,
+        .edit-box select {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 6px;
+        }
+    </style>
 </head>
+
 <body>
 
-    <!-- HEADER -->
-    <header class="header">
-        <div class="container header-inner">
-            <div class="brand">Chunri<span>Store</span></div>
+<script>
+if (localStorage.getItem("is_admin") !== "true") {
+    alert("Access restricted!");
+    window.location.href = "admin-login.html";
+}
+</script>
 
-            <div class="hamburger" onclick="toggleNav()">
-                <span></span><span></span><span></span>
-            </div>
+<!-- HEADER -->
+<header class="header">
+    <div class="container header-inner">
+        <div class="brand">Admin<span style="color:var(--orange)">Panel</span></div>
 
-            <nav class="nav">
-                <ul class="nav-list">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="products.html" style="color: var(--red); font-weight:700;">Products</a></li>
-                    <li><a href="cart.html">Cart</a></li>
-                    <li><a href="login.html">Login</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-    <div class="filters">
-    <input type="text" id="searchBox" placeholder="Search by name..." onkeyup="loadProducts()">
+        <nav class="nav">
+            <ul class="nav-list">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="add-product.html">Add Product</a></li>
+                <li><a href="products.html" style="color:var(--red);font-weight:700;">Manage Products</a></li>
+                <li><a href="#" onclick="logoutAdmin()">Logout</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
 
-    <select id="filterDesign" onchange="loadProducts()">
-        <option value="">All Designs</option>
-        <option value="net print">Net Print</option>
-        <option value="foil print">Foil Print</option>
-    </select>
+<!-- PRODUCT MANAGER -->
+<div class="container" style="padding:40px 0;">
+    <h2 style="color:var(--red); font-weight:800;">Manage Products</h2>
 
-    <select id="filterColor" onchange="loadProducts()">
-        <option value="">All Colors</option>
-        <option value="red">Red</option>
-        <option value="green">Green</option>
-        <option value="yellow">Yellow</option>
-        <option value="orange">Orange</option>
-    </select>
-
-    <select id="filterSize" onchange="loadProducts()">
-        <option value="">All Sizes</option>
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="1/2 mtr">1/2 mtr</option>
-        <option value="1 mtr">1 mtr</option>
-        <option value="2 mtr">2 mtr</option>
-    </select>
+    <div id="productList" style="margin-top:25px;"></div>
 </div>
 
+<script>
+const BASE_URL = "http://localhost:5000";
 
-<hr>
-
-    <!-- PRODUCTS SECTION -->
-    <div class="container" style="padding-top: 40px;">
-        <h2 style="margin-bottom: 20px; color: var(--red); font-weight:700;">Available Chunris</h2>
-
-        <div class="product-grid" id="productGrid">
-            <!-- Products will load here -->
-        </div>
-    </div>
-    <div id="toast" class="toast">Added to Cart</div>
-
-    <!-- JS -->
-    <script src="assets/js/app.js"></script>
-
-    <script>
-const API = "http://localhost:5000";
-
-// Load products on page open
-window.onload = loadProducts;
-
-async function loadProducts() {
-    const design = document.getElementById("filterDesign").value;
-    const color = document.getElementById("filterColor").value;
-    const size = document.getElementById("filterSize").value;
-    const search = document.getElementById("searchBox").value.trim();
-
-    const query = new URLSearchParams({
-        design,
-        color,
-        size,
-        search
-    });
-
-    const res = await fetch(`${API}/api/products?${query.toString()}`);
-    const data = await res.json();
-
-    displayProducts(data);
+// ============= LOGOUT ===========
+function logoutAdmin() {
+    localStorage.clear();
+    window.location.href = "admin-login.html";
 }
 
-function displayProducts(products) {
-    const container = document.getElementById("productGrid");
-    container.innerHTML = "";
-
-    if (!products.length) {
-        container.innerHTML = "<p>No products found.</p>";
-        return;
-    }
+// ============= LOAD PRODUCTS ===========
+async function loadProducts() {
+    const res = await fetch(`${BASE_URL}/api/products`);
+    const products = await res.json();
+    window.allProducts = products; 
+    let html = "";
 
     products.forEach(p => {
-        container.innerHTML += `
+        html += `
             <div class="product-card">
-                <img src="${p.image_url}" class="product-img">
-                <h3>${p.name}</h3>
-                <p>₹${p.price}</p>
-                <p>Cloth: ${p.cloth_type}</p>
-                <p>Size: ${p.size}</p>
-                <p>Color: ${p.color}</p>
-                <p>Design: ${p.design}</p>
-                <button onclick="addToCart(${p.id})">Add to Cart</button>
+                <img src="${p.image_url}" alt="product">
+
+                <div style="flex:1;">
+                    <h3>${p.name}</h3>
+                    <p>₹${p.price} | Stock: ${p.stock}</p>
+                    <p>${p.color} | ${p.cloth_type} | ${p.design} | ${p.size}</p>
+                </div>
+
+                <div class="product-actions">
+                    <button class="btn primary" onclick="openEdit(${p.id})">Edit</button>
+                    <button class="btn ghost" onclick="deleteProduct(${p.id})">Delete</button>
+                </div>
             </div>
         `;
     });
+
+    document.getElementById("productList").innerHTML = html;
 }
-async function addToCart(product_id) {
 
-    let user_id = localStorage.getItem("user_id");
+// ============= DELETE PRODUCT ===========
+async function deleteProduct(id) {
+    if (!confirm("Delete this product?")) return;
 
-    if (!user_id) {
-        alert("Please login first!");
-        window.location.href = "login.html";
-        return;
-    }
-
-    const res = await fetch("http://localhost:5000/api/cart/add", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            user_id: parseInt(user_id),
-            product_id: product_id,
-            qty: 1
-        })
+    await fetch(`${BASE_URL}/api/product/${id}`, {
+        method: "DELETE"
     });
 
-    showToast();  // 👈 now works properly
+    alert("Product deleted!");
+    loadProducts();
+}
+
+// ============= EDIT PRODUCT POPUP ===========
+function editProduct(p) {
+    const box = document.createElement("div");
+    box.classList.add("edit-box");
+    box.style = `
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.6); display:flex;
+        justify-content:center; align-items:center;
+    `;
+
+    box.innerHTML = `
+        <div style="background:white;padding:25px;border-radius:12px;width:320px;">
+            <h3>Edit Product</h3>
+
+            <input id="edit_name" value="${p.name}">
+<input id="edit_price" type="number" value="${p.price}">
+<input id="edit_stock" type="number" value="${p.stock}">
+<input id="edit_color" value="${p.color}">
+<input id="edit_size" value="${p.size}">
+<input id="edit_design" value="${p.design}">
+<input id="edit_cloth_type" value="${p.cloth_type}">
+
+
+            <button class="btn primary" style="width:100%;" onclick="saveEdit(${p.id})">Save</button>
+            <button class="btn ghost" style="margin-top:8px;width:100%;" onclick="this.parentElement.parentElement.remove()">Cancel</button>
+        </div>
+    `;
+
+    document.body.append(box);
+}
+
+// ============= SAVE EDIT ===========
+async function saveEdit(id) {
+    const box = document.querySelector(".edit-box");
+
+    const updated = {
+    name: document.getElementById("edit_name").value,
+    price: parseFloat(document.getElementById("edit_price").value),
+    stock: parseInt(document.getElementById("edit_stock").value),
+    color: document.getElementById("edit_color").value,
+    size: document.getElementById("edit_size").value,
+    design: document.getElementById("edit_design").value,
+    cloth_type: document.getElementById("edit_cloth_type").value
+};
+
+
+    await fetch(`${BASE_URL}/api/product/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(updated)
+    });
+
+    alert("Product updated!");
+    box.remove();
+    loadProducts();
+}
+
+loadProducts();
+function openEdit(id) {
+    const p = window.allProducts.find(x => x.id === id);
+    editProduct(p);
 }
 
 </script>
