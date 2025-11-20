@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Store - Cart</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="brand">Chunri<span>Store</span></div>
+
+            <div class="hamburger" onclick="toggleNav()">
+                <span></span><span></span><span></span>
+            </div>
+
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="cart.html" style="color: var(--red); font-weight:700;">Cart</a></li>
+                    <li><a href="orders.html">Orders</a></li>
+                    <li><a href="login.html">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- CART ITEMS -->
+    <div class="container" style="padding: 35px 0;">
+        <h2 style="margin-bottom: 20px; color: var(--red); font-weight:700;">Your Cart</h2>
+
+        <div id="cartContainer"></div>
+
+        <h3 id="totalBox" style="margin-top:20px; font-weight:700;"></h3>
+
+        <button class="checkout-btn" onclick="goCheckout()" id="checkoutBtn" style="display:none;">
+    Proceed to Checkout
+</button>
+
+
+    </div>
+
+    <!-- JS -->
+    <script src="assets/js/app.js"></script>
+
+    <script>
+async function loadCart() {
+
+    let user_id = localStorage.getItem("user_id");
+
+    if (!user_id) {
+        document.getElementById("cartContainer").innerHTML = "<p>Please login to view your cart.</p>";
+        return;
+    }
+
+    const res = await fetch(`http://localhost:5000/api/cart/${user_id}`);
+    const cart = await res.json();
+
+    if (cart.length === 0) {
+        document.getElementById("cartContainer").innerHTML = "<p>Your cart is empty.</p>";
+        document.getElementById("checkoutBtn").style.display = "none";
+        return;
+    }
+
+    let html = "";
+    let total = 0;
+
+    cart.forEach(item => {
+        total += item.subtotal;
+
+        html += `
+        <div class="cart-card">
+            <img src="${item.image_url}">
+            <div style="flex:1;">
+                <h3>${item.name}</h3>
+                <p>Price: ₹${item.price}</p>
+                <p>Subtotal: ₹${item.subtotal}</p>
+
+                <input type="number" min="1" value="${item.qty}"
+                       onchange="updateQty(${item.cart_id}, this.value)">
+
+                <button onclick="removeItem(${item.cart_id})"
+                    style="margin-top:10px; background:red; color:#fff; padding:6px 12px; border:none; border-radius:8px;">
+                    Remove
+                </button>
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById("cartContainer").innerHTML = html;
+    document.getElementById("totalBox").innerText = "Total: ₹" + total;
+    document.getElementById("checkoutBtn").style.display = "block";  // <--- FIX HERE
+    
+}
+
+
+async function updateQty(cart_id, qty) {
+    await fetch("http://localhost:5000/api/cart/update", {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({cart_id, qty: parseInt(qty)})
+    });
+    loadCart();
+}
+
+
+async function removeItem(cart_id) {
+    await fetch(`http://localhost:5000/api/cart/delete/${cart_id}`, {
+        method: "DELETE"
+    });
+    loadCart();
+}
+
+loadCart();
+function goCheckout() {
+    window.location.href = "checkout.html";
+}
+    </script>
+
+</body>
+</html>

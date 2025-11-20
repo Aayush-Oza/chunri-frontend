@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Store - Register</title>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 12px;
+        }
+        .otp-box {
+            display: none;
+            margin-top: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--red);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="container header-inner">
+        <div class="brand">Chunri<span>Store</span></div>
+
+        <div class="hamburger" onclick="toggleNav()">
+            <span></span><span></span><span></span>
+        </div>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html" style="color: var(--red); font-weight:700;">Register</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<div class="auth-box">
+    <h2>Create Account</h2>
+
+    <input class="input-field" id="name" placeholder="Full Name">
+
+    <input class="input-field" id="email" placeholder="Email Address">
+
+    <input class="input-field" id="phone" placeholder="Phone Number">
+
+    <textarea class="input-field" id="address" placeholder="Shop Address"></textarea>
+
+   <div style="position:relative;">
+    <input type="password" id="password" class="input-field" placeholder="Create Password">
+    <span class="toggle-pass" onclick="togglePassword('password', this)">👁️</span>
+</div>
+
+<div style="position:relative;">
+    <input type="password" id="confirmPassword" class="input-field" placeholder="Confirm Password">
+    <span class="toggle-pass" onclick="togglePassword('confirmPassword', this)">👁️</span>
+</div>
+
+    <button onclick="sendOTP()">Send OTP</button>
+
+    <!-- OTP BOX -->
+    <div class="otp-box" id="otpSection">
+        <input class="input-field" id="otp" placeholder="Enter OTP">
+        <button onclick="verifyAndRegister()">Verify OTP & Register</button>
+    </div>
+
+    <p style="margin-top: 10px; text-align:center;">
+        Already have an account? 
+        <a href="login.html" style="color: var(--orange); font-weight:700;">Login</a>
+    </p>
+</div>
+
+
+<script>
+// INPUT REFERENCES
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const phoneInput = document.getElementById("phone");
+const addressInput = document.getElementById("address");
+const passwordInput = document.getElementById("password");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+
+function togglePassword(fieldId, icon) {
+    const input = document.getElementById(fieldId);
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+    }
+}
+
+const BASE_URL = "http://localhost:5000";
+
+function validateForm() {
+    let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let phonePattern = /^[0-9]{10}$/;
+
+    let name = nameInput.value.trim();
+    let email = emailInput.value.trim();
+    let phone = phoneInput.value.trim();
+    let address = addressInput.value.trim();
+    let pass = passwordInput.value.trim();
+    let cpass = confirmPasswordInput.value.trim();
+
+    if (!name || !email || !phone || !address || !pass || !cpass) {
+        alert("All fields are required!");
+        return false;
+    }
+
+    if (!emailPattern.test(email)) {
+        alert("Invalid Email Format");
+        return false;
+    }
+
+    if (!phonePattern.test(phone)) {
+        alert("Invalid Phone Number (10 digits required)");
+        return false;
+    }
+
+    if (pass !== cpass) {
+        alert("Passwords do not match");
+        return false;
+    }
+
+    return true;
+}
+
+
+async function sendOTP() {
+    if (!validateForm()) return;
+
+    const res = await fetch(`${BASE_URL}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: emailInput.value,
+            phone: phoneInput.value
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert("OTP sent successfully!");
+        document.getElementById("otpSection").style.display = "block";
+    } else {
+        alert(data.error || "OTP sending failed");
+    }
+}
+
+
+async function verifyAndRegister() {
+    const otpValue = otp.value;
+
+    // Step 1 — Verify OTP
+    const otpRes = await fetch(`${BASE_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: emailInput.value,
+            otp: otpValue
+        })
+    });
+
+    const otpData = await otpRes.json();
+
+    if (!otpRes.ok) {
+        alert(otpData.error || "OTP failed");
+        return;
+    }
+
+    // Step 2 — Register User
+    const regRes = await fetch(`${BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: nameInput.value,
+            email: emailInput.value,
+            phone: phoneInput.value,
+            address: addressInput.value,
+            password: passwordInput.value
+        })
+    });
+
+    const regData = await regRes.json();
+
+    if (regRes.ok) {
+        alert("Registration Successful!");
+        window.location.href = "login.html";
+    } else {
+        alert(regData.error);
+    }
+}
+
+</script>
+
+
+</body>
+</html>

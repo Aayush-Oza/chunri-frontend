@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Store - Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="brand">Chunri<span>Store</span></div>
+
+            <div class="hamburger" onclick="toggleNav()">
+                <span></span><span></span><span></span>
+            </div>
+
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="login.html" style="color: var(--red); font-weight: 700;">Login</a></li>
+                    <li><a href="register.html">Register</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- LOGIN BOX -->
+    <div class="auth-box">
+        <h2>Login</h2>
+
+        <input type="email" id="email" placeholder="Enter Email">
+        <input type="password" id="password" placeholder="Enter Password">
+
+        <button onclick="loginUser()">Login</button>
+
+        <p style="margin-top: 10px; text-align:center;">
+            Don't have an account? 
+            <a href="register.html" style="color: var(--orange); font-weight: 700;">Register</a>
+        </p>
+    </div>
+
+    <!-- JS -->
+    <script src="assets/js/app.js"></script>
+
+    <script>
+        const BASE_URL = "http://localhost:5000";  // Change after deployment
+
+        async function loginUser() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!email || !password) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            const res = await fetch(`${BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json" 
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Login Successful!");
+
+                // Save session
+                localStorage.setItem("user_id", data.user_id);
+                localStorage.setItem("is_admin", data.is_admin);
+
+                // Redirect users
+                if (data.is_admin) {
+                    window.location.href = "admin_dashboard.html";
+                } else {
+                    window.location.href = "products.html";
+                }
+            } 
+            else {
+                alert(data.error || "Invalid Credentials");
+            }
+        }
+    </script>
+
+</body>
+</html>

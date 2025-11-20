@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Chunri Store</title>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="brand">Chunri<span style="color:var(--yellow)">Store</span></div>
+
+            <div class="hamburger" onclick="toggleNav()">
+                <span></span><span></span><span></span>
+            </div>
+
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="cart.html">Cart</a></li>
+                    <li><a href="orders.html" style="color:var(--red);font-weight:700;">Orders</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+
+    <div class="container" style="padding: 35px 0;">
+        <h2 style="color: var(--red); font-weight:700;">My Orders</h2>
+
+        <div id="ordersList" style="margin-top: 25px;"></div>
+    </div>
+
+
+<script src="assets/js/app.js"></script>
+
+<script>
+const BASE_URL = "http://localhost:5000";
+
+document.addEventListener("DOMContentLoaded", loadOrders);
+
+async function loadOrders() {
+    const user_id = localStorage.getItem("user_id");
+
+    if (!user_id) {
+        alert("Please login first");
+        window.location.href = "login.html";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${BASE_URL}/api/products`);
+        const productList = await res.json();
+
+        const ord = await fetch(`${BASE_URL}/api/orders/${user_id}`); 
+        const orders = await ord.json();
+
+        console.log(orders);
+
+        if (orders.length === 0) {
+            document.getElementById("ordersList").innerHTML =
+                `<p style='opacity:.7;'>No orders found.</p>`;
+            return;
+        }
+
+        let html = "";
+
+        orders.forEach(order => {
+            html += `
+                <div class="order-card" style="
+                    background:white; 
+                    padding:18px;
+                    border-radius:12px;
+                    margin-bottom:18px;
+                    box-shadow:0 4px 14px rgba(0,0,0,0.1);
+                ">
+                    <h3 style="color:var(--orange);">Order #${order.order_id}</h3>
+                    <p><strong>Total:</strong> ₹${order.total_price}</p>
+                    <p><strong>Status:</strong> ${order.payment_status}</p>
+                    <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+
+                    <h4 style="margin-top:10px;color:var(--red);">Items:</h4>
+                    <ul style="margin-left:15px;">
+            `;
+
+            order.items.forEach(it => {
+                const p = productList.find(x => x.id === it.product_id);
+                html += `
+                    <li>
+                        ${p ? p.name : "Unknown Product"}  
+                        (Qty: ${it.qty}, Price: ₹${it.price})
+                    </li>
+                `;
+            });
+
+            html += `
+                    </ul>
+                </div>
+            `;
+        });
+
+        document.getElementById("ordersList").innerHTML = html;
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("ordersList").innerHTML = "<p>Error loading orders.</p>";
+    }
+}
+</script>
+
+</body>
+</html>

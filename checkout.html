@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Store - Checkout</title>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .checkout-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .summary-box {
+            background: #fff3f3;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .checkout-btn {
+            padding: 12px 20px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="container header-inner">
+        <div class="brand">Chunri<span>Store</span></div>
+
+        <div class="hamburger" onclick="toggleNav()">
+            <span></span><span></span><span></span>
+        </div>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                <li><a href="products.html">Products</a></li>
+                <li><a href="cart.html">Cart</a></li>
+                <li><a href="checkout.html" style="color: var(--red); font-weight:700;">Checkout</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+
+    <h2 style="color: var(--red); margin-top: 20px;">Checkout</h2>
+
+    <!-- CUSTOMER DETAILS -->
+    <div class="checkout-box">
+        <h3>Customer Details</h3>
+
+        <input id="name" class="input-field" placeholder="Full Name">
+        <input id="email" class="input-field" placeholder="Email">
+        <input id="phone" class="input-field" placeholder="Phone Number">
+        <textarea id="address" class="input-field" placeholder="Delivery Address"></textarea>
+
+        <h3>Payment Method</h3>
+        <select id="payment" class="input-field">
+            <option value="COD">Cash On Delivery</option>
+            <option value="Online">Online Payment</option>
+        </select>
+    </div>
+
+    <!-- ORDER SUMMARY -->
+    <div id="checkoutSummary" class="summary-box"></div>
+
+    <button class="checkout-btn" onclick="placeOrder()">Place Order</button>
+</div>
+
+<script>
+const API = "http://localhost:5000";
+
+// Load backend cart
+document.addEventListener("DOMContentLoaded", loadCheckout);
+
+async function loadCheckout() {
+    let user_id = localStorage.getItem("user_id");
+
+    if (!user_id) {
+        document.getElementById("checkoutSummary").innerHTML =
+            "<p>Please login first.</p>";
+        return;
+    }
+
+    const res = await fetch(`${API}/api/cart/${user_id}`);
+    const cart = await res.json();
+
+    if (cart.length === 0) {
+        document.getElementById("checkoutSummary").innerHTML = "<p>Your cart is empty.</p>";
+        return;
+    }
+
+    let total = 0;
+    let html = "<h3>Order Summary</h3>";
+
+    cart.forEach(item => {
+        let sub = item.price * item.qty;
+        total += sub;
+
+        html += `
+            <p><strong>${item.name}</strong> (x${item.qty}) — ₹${sub}</p>
+        `;
+    });
+
+    let gst = Math.round(total * 0.18);
+    let grand = total + gst;
+
+    html += `
+        <hr>
+        <p>Subtotal: ₹${total}</p>
+        <p>GST (18%): ₹${gst}</p>
+        <h3>Grand Total: ₹${grand}</h3>
+    `;
+
+    document.getElementById("checkoutSummary").innerHTML = html;
+}
+
+
+async function placeOrder() {
+
+    let user_id = localStorage.getItem("user_id");
+
+    // read backend cart again
+    const resCart = await fetch(`${API}/api/cart/${user_id}`);
+    const cart = await resCart.json();
+
+    if (cart.length === 0) {
+        alert("Cart is empty!");
+        return;
+    }
+
+    // build items list
+    const items = cart.map(item => ({
+        product_id: item.product_id,
+        qty: item.qty,
+        price: item.price
+    }));
+
+    // send order
+    const res = await fetch(`${API}/api/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id,
+            name: name.value,
+            email: email.value,
+            phone: phone.value,
+            address: address.value,
+            payment: payment.value,
+            items
+        })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        alert("Order failed!");
+        return;
+    }
+
+    alert("Order placed successfully!");
+
+    await fetch(`${API}/api/cart/clear/${user_id}`, { method: "DELETE" });
+
+    window.location.href = "orders.html";
+}
+</script>
+
+</body>
+</html>

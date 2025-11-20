@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunri Store - Products</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/products.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="brand">Chunri<span>Store</span></div>
+
+            <div class="hamburger" onclick="toggleNav()">
+                <span></span><span></span><span></span>
+            </div>
+
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html" style="color: var(--red); font-weight:700;">Products</a></li>
+                    <li><a href="cart.html">Cart</a></li>
+                    <li><a href="login.html">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="filters">
+    <input type="text" id="searchBox" placeholder="Search by name..." onkeyup="loadProducts()">
+
+    <select id="filterDesign" onchange="loadProducts()">
+        <option value="">All Designs</option>
+        <option value="net print">Net Print</option>
+        <option value="foil print">Foil Print</option>
+    </select>
+
+    <select id="filterColor" onchange="loadProducts()">
+        <option value="">All Colors</option>
+        <option value="red">Red</option>
+        <option value="green">Green</option>
+        <option value="yellow">Yellow</option>
+        <option value="orange">Orange</option>
+    </select>
+
+    <select id="filterSize" onchange="loadProducts()">
+        <option value="">All Sizes</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="1/2 mtr">1/2 mtr</option>
+        <option value="1 mtr">1 mtr</option>
+        <option value="2 mtr">2 mtr</option>
+    </select>
+</div>
+
+
+<hr>
+
+    <!-- PRODUCTS SECTION -->
+    <div class="container" style="padding-top: 40px;">
+        <h2 style="margin-bottom: 20px; color: var(--red); font-weight:700;">Available Chunris</h2>
+
+        <div class="product-grid" id="productGrid">
+            <!-- Products will load here -->
+        </div>
+    </div>
+    <div id="toast" class="toast">Added to Cart</div>
+
+    <!-- JS -->
+    <script src="assets/js/app.js"></script>
+
+    <script>
+const API = "http://localhost:5000";
+
+// Load products on page open
+window.onload = loadProducts;
+
+async function loadProducts() {
+    const design = document.getElementById("filterDesign").value;
+    const color = document.getElementById("filterColor").value;
+    const size = document.getElementById("filterSize").value;
+    const search = document.getElementById("searchBox").value.trim();
+
+    const query = new URLSearchParams({
+        design,
+        color,
+        size,
+        search
+    });
+
+    const res = await fetch(`${API}/api/products?${query.toString()}`);
+    const data = await res.json();
+
+    displayProducts(data);
+}
+
+function displayProducts(products) {
+    const container = document.getElementById("productGrid");
+    container.innerHTML = "";
+
+    if (!products.length) {
+        container.innerHTML = "<p>No products found.</p>";
+        return;
+    }
+
+    products.forEach(p => {
+        container.innerHTML += `
+            <div class="product-card">
+                <img src="${p.image_url}" class="product-img">
+                <h3>${p.name}</h3>
+                <p>₹${p.price}</p>
+                <p>Cloth: ${p.cloth_type}</p>
+                <p>Size: ${p.size}</p>
+                <p>Color: ${p.color}</p>
+                <p>Design: ${p.design}</p>
+                <button onclick="addToCart(${p.id})">Add to Cart</button>
+            </div>
+        `;
+    });
+}
+async function addToCart(product_id) {
+
+    let user_id = localStorage.getItem("user_id");
+
+    if (!user_id) {
+        alert("Please login first!");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const res = await fetch("http://localhost:5000/api/cart/add", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_id: parseInt(user_id),
+            product_id: product_id,
+            qty: 1
+        })
+    });
+
+    showToast();  // 👈 now works properly
+}
+
+</script>
+
+</body>
+</html>

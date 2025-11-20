@@ -1,0 +1,11 @@
+<h2>Order Placed Successfully!</h2>
+<p>Your order has been confirmed.</p>
+
+<button onclick="downloadInvoice()">Download Invoice PDF</button>
+
+<script>
+function downloadInvoice() {
+    const order_id = localStorage.getItem("last_order_id");
+    window.location.href = `http://localhost:5000/api/invoice/${order_id}`;
+}
+</script>
