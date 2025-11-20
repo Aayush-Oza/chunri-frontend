@@ -1,0 +1,109 @@
+/* -------------------------------------------
+   PRODUCT PAGE FILTER BAR
+------------------------------------------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px;
+  background: #fff7e0;
+  border-radius: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.filters select {
+  padding: 10px 14px;
+  border: 1px solid #f2c879;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #503600;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.filters select:hover {
+  border-color: #ffb300;
+  box-shadow: 0 0 8px rgba(255,179,0,0.4);
+}
+
+@media (max-width: 600px) {
+  .filters {
+    flex-direction: column;
+  }
+}
+
+/* -------------------------------------------
+   PRODUCT GRID
+------------------------------------------- */
+.product-grid {
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 600px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* -------------------------------------------
+   PRODUCT CARD
+------------------------------------------- */
+.product-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 14px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  transition: 0.2s;
+  text-align: center;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.16);
+}
+
+.product-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.product-card h3 {
+  margin: 10px 0 5px;
+  font-size: 1.2rem;
+  color: #d13f2d;
+  text-transform: capitalize;
+}
+
+.product-card p {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.product-card button {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #ff9800;
+  border: none;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.2s;
+}
+
+.product-card button:hover {
+  background: #e67c26;
+  transform: translateY(-3px);
+}
